@@ -29,7 +29,7 @@
       <module name="gulimall-product" target="1.8" />
       <module name="gulimall-third-party" target="1.8" />
       <module name="gulimall-ware" target="1.5" />
-      <module name="gulimall-ware2" target="1.8" />
+      <module name="gulimall-ware2" target="1.5" />
       <module name="renren-fast" target="1.8" />
       <module name="renren-generator" target="1.8" />
     </bytecodeTargetLevel>
