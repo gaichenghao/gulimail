@@ -37,6 +37,10 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
  *          给校验注解标注什么情况需要进行校验
  *          2）、@Validated({AddGroup.class})
  *           *  3)、默认没有指定分组的校验注解@NotBlank，在分组校验情况下不生效，只会在@Validated生效；
+ *    5)、自定义校验
+ *      1）、编写一个自定义的校验注解
+ *      2）、编写一个自定义的校验器
+ *      3）、关联自定义的校验注解和校验器
  *
  *
  * 4、统一的异常处理
