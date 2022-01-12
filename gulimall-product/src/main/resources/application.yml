@@ -1,34 +1,34 @@
-spring:
-  datasource:
-    username: root
-    password: root
-    url: jdbc:mysql://192.168.65.142:3306/gulimall_pms
-    driver-class-name: com.mysql.jdbc.Driver
-  cloud:
-    nacos:
-      discovery:
-        server-addr: 127.0.0.1:8848
-    alicloud:
-      access-key:
-      secret-key:
-      oss:
-        endpoint: oss-cn-beijing.aliyuncs.com
-
-  application:
-    name: gulimall-product
-
-mybatis-plus:
-  mapper-locations: classpath*:/mapper/**/*.xml
-  global-config:
-    db-config:
-      id-type: auto
-      logic-delete-value: 1
-      logic-not-delete-value: 0
-
-
-server:
-  port: 10001
-
-logging:
-  level:
-    com.atguigu.gulimall: debug
+#spring:
+#  datasource:
+#    username: root
+#    password: root
+#    url: jdbc:mysql://192.168.65.141:3306/gulimall_pms
+#    driver-class-name: com.mysql.jdbc.Driver
+#  cloud:
+#    nacos:
+#      discovery:
+#        server-addr: 127.0.0.1:8848
+#    alicloud:
+#      access-key:
+#      secret-key:
+#      oss:
+#        endpoint: oss-cn-beijing.aliyuncs.com
+#
+#  application:
+#    name: gulimall-product
+#
+#mybatis-plus:
+#  mapper-locations: classpath*:/mapper/**/*.xml
+#  global-config:
+#    db-config:
+#      id-type: auto
+#      logic-delete-value: 1
+#      logic-not-delete-value: 0
+#
+#
+#server:
+#  port: 10001
+#
+#logging:
+#  level:
+#    com.atguigu.gulimall: debug

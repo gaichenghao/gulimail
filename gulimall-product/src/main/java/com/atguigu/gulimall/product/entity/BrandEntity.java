@@ -5,13 +5,11 @@ import com.atguigu.common.valid.ListValue;
 import com.atguigu.common.valid.UpdateGroup;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-
-import java.io.Serializable;
-import java.util.Date;
 import lombok.Data;
 import org.hibernate.validator.constraints.URL;
 
 import javax.validation.constraints.*;
+import java.io.Serializable;
 
 /**
  * 品牌
@@ -56,7 +54,7 @@ public class BrandEntity implements Serializable {
 	 * 检索首字母
 	 */
 	@NotEmpty(groups = {AddGroup.class})
-	@Pattern(regexp = "/^[a-zA-z]$/",message = "检索首字母必须是一个字母",groups = {AddGroup.class,UpdateGroup.class})
+	@Pattern(regexp = "^[a-zA-z]$",message = "检索首字母必须是一个字母",groups = {AddGroup.class,UpdateGroup.class})
 	private String firstLetter;
 	/**
 	 * 排序
