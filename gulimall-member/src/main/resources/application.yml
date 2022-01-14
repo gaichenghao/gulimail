@@ -2,12 +2,12 @@
 #  datasource:
 #    username: root
 #    password: root
-#    url: jdbc:mysql://192.168.65.140:3306/gulimall_ums
+#    url: jdbc:mysql://101.200.164.72:3306/gulimall_ums
 #    driver-class-name: com.mysql.jdbc.Driver
 #  cloud:
 #    nacos:
 #      discovery:
-#        server-addr: 127.0.0.1:8848
+#        server-addr: 101.200.164.72:8848
 #  application:
 #    name: gulimall-member
 #
