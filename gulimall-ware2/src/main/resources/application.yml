@@ -9,8 +9,11 @@ spring:
     nacos:
       discovery:
         server-addr: 101.200.164.72:8848
+        namespace: gulimall
   application:
     name: gulimall-ware
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml
   global-config:
@@ -18,3 +21,6 @@ mybatis-plus:
       id-type: auto
 server:
   port: 11000
+logging:
+  level:
+    com.atguigu.gulimall: debug
