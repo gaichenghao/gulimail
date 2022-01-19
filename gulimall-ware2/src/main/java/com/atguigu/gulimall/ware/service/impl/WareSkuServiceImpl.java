@@ -69,7 +69,7 @@ public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> i
             wareSkuEntity.setStockLocked(0);
             //TODO远程查询sku的名字,如果失败 整个事务无需回滚
             //1\自己catch异常
-            //// TODO: 2022/1/18  该可以用什么方法让异常出现以后不会管？高级 
+            //// TODO: 2022/1/18  该可以用什么方法让异常出现以后不会管？高级
             try {
                 R info = productFeignService.info(skuId);
                 Map<String, Object> data = (Map<String, Object>) info.get("skuInfo");
