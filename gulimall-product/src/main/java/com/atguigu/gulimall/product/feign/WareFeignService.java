@@ -2,7 +2,6 @@ package com.atguigu.gulimall.product.feign;
 
 
 import com.atguigu.common.utils.R;
-import com.atguigu.gulimall.product.vo.SkuHasStockVo;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,5 +20,5 @@ public interface WareFeignService {
      * @return
      */
     @PostMapping("/ware/waresku/hasstock")
-    R<List<SkuHasStockVo>> getSkusHasStock(@RequestBody List<Long> skuIds);
+    R getSkusHasStock(@RequestBody List<Long> skuIds);
 }

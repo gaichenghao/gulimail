@@ -30,14 +30,13 @@ public class WareSkuController {
 
     //查询sku是否有库存
     @PostMapping("/hasstock")
-    public R<List<SkuHasStockVo>> getSkusHasStock(@RequestBody List<Long> skuIds){
+    public R getSkusHasStock(@RequestBody List<Long> skuIds){
 
         //skuid stock
         List<SkuHasStockVo> vos=wareSkuService.getSkusHasStock(skuIds);
 
-        R<List<SkuHasStockVo>> ok=new R<List<SkuHasStockVo>>();
-        ok.setData(vos);
-        return ok;
+
+        return R.ok().setData(vos);
 
     }
 

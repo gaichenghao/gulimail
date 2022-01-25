@@ -1,5 +1,6 @@
 package com.atguigu.gulimall.product.service.impl;
 
+import com.alibaba.fastjson.TypeReference;
 import com.atguigu.common.constant.ProductConstant;
 import com.atguigu.common.to.SkuReductionTo;
 import com.atguigu.common.to.SpuBoundTo;
@@ -273,8 +274,10 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
 
         try {
 
-            R<List<SkuHasStockVo>> skusHasStock = wareFeignService.getSkusHasStock(skuIds);
-            stockMap = skusHasStock.getData().stream().collect(Collectors.toMap(
+            R r = wareFeignService.getSkusHasStock(skuIds);
+            TypeReference<List<SkuHasStockVo>> typeReference = new TypeReference<List<SkuHasStockVo>>() {};
+
+            stockMap = r.getData(typeReference).stream().collect(Collectors.toMap(
                     SkuHasStockVo::getSkuId, item -> item.getHasStock()
             ));
 
@@ -332,8 +335,33 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
                 this.baseMapper.updateSpuStatus(spuId, ProductConstant.StatusEnum.SPU_UP.getCode());
             }else{
                 //远程调用失败
-
                 // TODO: 2022/1/21 7、重复调用？接口幂等性：重试机制？
+                // Feign调用流程
+                /**
+                 * 1\构造请求数据，将对象转为json
+                 *      RequestTemplate template= buildTemplateFromArgs.create(argV);
+                 * 2、发送请求进行执行（执行成功会解码响应数据）:
+                 *  executeAndDecode(template);
+                 * 3、执行请求会有重试机制
+                 * while(true){
+                 *     try{
+                 *         executeAndDecode(template);
+                 *     }catch(){
+                 *          try{
+                 *              retryer.continueOrPropagate(e);
+                 *          }catch(){
+                 *              throw ex
+                 *              continue;
+                 *          }
+                 *
+                 *     }
+                 *
+                 * }
+                 *
+                 */
+
+
+
             }
 
         }catch (Exception e){
