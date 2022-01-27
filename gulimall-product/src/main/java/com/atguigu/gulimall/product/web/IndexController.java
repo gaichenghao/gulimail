@@ -39,6 +39,12 @@ public class IndexController {
         return map;
     }
 
+    @ResponseBody
+    @GetMapping("/hello")
+    private String hello(){
+        return "hello";
+    }
+
 
 
 }
