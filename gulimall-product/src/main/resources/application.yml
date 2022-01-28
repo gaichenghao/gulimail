@@ -32,3 +32,8 @@
 #logging:
 #  level:
 #    com.atguigu.gulimall: debug
+
+#spring:
+#  redis:
+#    host: 101.200.164.72
+#    port: 6379
