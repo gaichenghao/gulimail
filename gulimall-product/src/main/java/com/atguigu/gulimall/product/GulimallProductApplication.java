@@ -65,12 +65,19 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
  * 1）引入dev-tools
  * 2） 修改完页面ctrl shift f9 重新自动编译下页面，代码配置重启
  *
- * 5、整合redis
+ * 6、整合redis
  *  1）、引入data-redis-start
  *  2）、简单配置redis的host信息
  *  3）、使用springboot自动配置好的stringredistemplate来操作redis
  *   redis-》map 存放数据key 数据值value
- *
+ *  7、整合redisson 作为分布式锁等功能框架
+ *  1）、引入依赖
+ *          <dependency>
+ *             <groupId>org.redisson</groupId>
+ *             <artifactId>redisson</artifactId>
+ *             <version>3.12.0</version>
+ *         </dependency>
+ *     2）、配置redisson
  *
  *
  * */
