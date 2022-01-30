@@ -12,9 +12,11 @@ import com.atguigu.gulimall.product.vo.Catalog2Vo;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -33,6 +35,9 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
 
     @Autowired
     private StringRedisTemplate redisTemplate;
+
+    @Autowired
+    RedissonClient redisson;
 
     private Map<String, Object> cache=new HashMap<>();
 
@@ -106,8 +111,31 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
     public void updateCascade(CategoryEntity category) {
         this.updateById(category);
         categoryBrandRelationService.updateCategory(category.getCatId(),category.getName());
+        //同时修改缓存中的数据
+        //redis.del("catalogJson");//等待下次主动查询进行更新
     }
 
+    /**
+     *     1\每一个需要缓存的数据都来指定要放到那个名字的缓存 【缓存的分区（按照业务类型分）】
+     *     2\@Cacheable({"category"})
+     *     代表当前方法的结果需要缓存 如果缓存中有，方法不用调用
+     *     如果缓存中没有 会调用方法 最后将方法的结果放入缓存
+     *     3、默认行为
+     *      1）如果缓存中有 方法不用调用
+     *      2）、key调用自动生成 缓存的名字：：simplekey【】（自动生成的key值）
+     *      3）、缓存的value的值 默认使用jdk序列化机制 将序列化后的数据存到redis
+     *      4）、默认ttl时间 -1；
+     *
+     *     自定义：
+     *     1）指定生成的缓存使用的key key属性指定 接受一个spel
+     *     spel详细参照 https://www.bilibili.com/video/BV1np4y1C7Yf?p=169&spm_id_from=pageDriver  10:36
+     *     2）、指定缓存的数据的存活时间:配置文件中修改ttl
+     *     3）、将数据保存为json格式：
+     *
+     */
+
+
+    @Cacheable(value = {"category"},key = "#root.method.name")  //代表当前方法的结果需要缓存 如果缓存中有，方法不用调用 如果缓存中没有 会嗲用方法 最后将方法的结果放入缓存
     @Override
     public List<CategoryEntity> getLevel1Category() {
         long l = System.currentTimeMillis();
@@ -160,43 +188,62 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
 
 
     public Map<Long,List<Catalog2Vo>> getCatalogJsonFromDbWithRedisLock() {
-        //1\占分布式锁 去redis 占坑
-        String uuid = UUID.randomUUID().toString();
-        Boolean lock = redisTemplate.opsForValue().setIfAbsent("lock", uuid,300,TimeUnit.SECONDS);
-        if(lock){
-            System.out.println("获取分布式锁成功。。。。");
-            //加锁成功 执行业务
-            //2\设置过期时间 必须和加锁是同步的 原子的
+        //1、锁的名字 锁的粒度 越细越快
+        //锁的粒度 具体缓存的是某个数据 11-号商品 product-11-lock
+        RLock catalogJsonlock = redisson.getLock("catalogJson-lock");
+        catalogJsonlock.lock();
 
-            //redisTemplate.expire("lock",30,TimeUnit.SECONDS);
+        Map<Long, List<Catalog2Vo>> dataFromDB;
+        try {
+            dataFromDB = getDataFromDB();
 
-            Map<Long, List<Catalog2Vo>> dataFromDB;
-            try {
-                dataFromDB = getDataFromDB();
-
-            }finally {
-                String script ="if redis.call('get',KEYS[1])==ARGV[1] then return redis.call('del',KEYS[1]) else return 0 end";
-                //删除锁
-                Long lcok1 = redisTemplate.execute(new DefaultRedisScript<Long>(script, Long.class), Arrays.asList("lock"), uuid);
-            }
-            //获取值对比+对比成功删除=原子操作 luo脚本解锁
-            //String lockValue = redisTemplate.opsForValue().get("lock");
-            //if(uuid.equals(lockValue)){
-            //    //删除我自己的锁
-            //    redisTemplate.delete("lock");
-            //}
-            return dataFromDB;
-        }else{
-            //加锁失败 重试 synchronized()
-            //休眠100ms重试
-            System.out.println("获取分布式锁失败。。。。等待重试");
-            try {
-                Thread.sleep(200);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return getCatalogJsonFromDbWithRedisLock();//自旋的方式
+        }finally {
+            catalogJsonlock.unlock();
         }
+
+        return dataFromDB;
+
+
+
+
+
+        //1\占分布式锁 去redis 占坑
+        //String uuid = UUID.randomUUID().toString();
+        //Boolean lock = redisTemplate.opsForValue().setIfAbsent("lock", uuid,300,TimeUnit.SECONDS);
+        //if(lock){
+        //    System.out.println("获取分布式锁成功。。。。");
+        //    //加锁成功 执行业务
+        //    //2\设置过期时间 必须和加锁是同步的 原子的
+        //
+        //    //redisTemplate.expire("lock",30,TimeUnit.SECONDS);
+        //
+        //    Map<Long, List<Catalog2Vo>> dataFromDB;
+        //    try {
+        //        dataFromDB = getDataFromDB();
+        //
+        //    }finally {
+        //        String script ="if redis.call('get',KEYS[1])==ARGV[1] then return redis.call('del',KEYS[1]) else return 0 end";
+        //        //删除锁
+        //        Long lcok1 = redisTemplate.execute(new DefaultRedisScript<Long>(script, Long.class), Arrays.asList("lock"), uuid);
+        //    }
+        //    //获取值对比+对比成功删除=原子操作 luo脚本解锁
+        //    //String lockValue = redisTemplate.opsForValue().get("lock");
+        //    //if(uuid.equals(lockValue)){
+        //    //    //删除我自己的锁
+        //    //    redisTemplate.delete("lock");
+        //    //}
+        //    return dataFromDB;
+        //}else{
+        //    //加锁失败 重试 synchronized()
+        //    //休眠100ms重试
+        //    System.out.println("获取分布式锁失败。。。。等待重试");
+        //    try {
+        //        Thread.sleep(200);
+        //    } catch (Exception e) {
+        //        e.printStackTrace();
+        //    }
+        //    return getCatalogJsonFromDbWithRedisLock();//自旋的方式
+        //}
 
 
     }

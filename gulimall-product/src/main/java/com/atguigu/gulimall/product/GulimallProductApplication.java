@@ -78,6 +78,23 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
  *             <version>3.12.0</version>
  *         </dependency>
  *     2）、配置redisson
+ *  8、整合springcache简化缓存开发
+ *      1）、引入依赖
+ *      spring-boot-starter-cache 、spring-boot-starter-data-redis
+ *      2）、写配置
+ *          （1）自动配置了哪些
+ *              cacheautoconfiguration 会导出 rediscacheautoconfiguration
+ *           (2)配置使用redis作为缓存
+ *      3）、测试使用缓存
+ * @Cacheable 触发将数据保存到缓存的操作
+ * @CacheEvict 触发将数据从缓存删除的操作
+ * @CachePut 不影响方法执行更新缓存
+ * @Caching 组合以上多个操作
+ * @CacheConfig 从类级别共享缓存的相同配置
+ *              1）、开启缓存@EnableCaching
+ *              2)、只需要使用注解就能完成缓存操作
+ *      4）、原理：
+ *
  *
  *
  * */

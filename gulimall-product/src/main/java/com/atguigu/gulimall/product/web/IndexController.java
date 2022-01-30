@@ -3,14 +3,13 @@ package com.atguigu.gulimall.product.web;
 import com.atguigu.gulimall.product.entity.CategoryEntity;
 import com.atguigu.gulimall.product.service.CategoryService;
 import com.atguigu.gulimall.product.vo.Catalog2Vo;
-import org.redisson.api.RLock;
-import org.redisson.api.RReadWriteLock;
-import org.redisson.api.RedissonClient;
+import org.redisson.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.List;
@@ -85,8 +84,13 @@ public class IndexController {
     }
 
 
-    //保证一定能读到最新数据 修改期间 写锁是一个排它锁（互斥锁）。读锁是一个共享锁
+    //保证一定能读到最新数据 修改期间 写锁是一个排它锁（互斥锁，独享锁）。读锁是一个共享锁
     //写锁你没释放读就必须等待
+    //读+读：相当于无锁，并发读 只会在redis中记录好 ，所有当前的读锁 他们都会同时加锁成功
+    //写+读：等待写锁释放
+    //写+写：阻塞方式
+    //读+写:有读锁 写也需要等待：
+    //只要有写的存在 都必须等待
     @GetMapping("/write")
     @ResponseBody
     public String writeValue(){
@@ -126,6 +130,67 @@ public class IndexController {
         }
         return s;
     }
+
+    /**
+     * 放假锁门
+     * 1班没人了
+     * 5各班全部走完 我们可以锁大门
+     */
+    @GetMapping("/lockDoor")
+    @ResponseBody
+    public String lockDoor() throws InterruptedException {
+        RCountDownLatch door = redisson.getCountDownLatch("door");
+        door.trySetCount(5);
+        door.await();
+
+        return "放假了";
+    }
+
+
+    @GetMapping("/gogogo/{id}")
+    @ResponseBody
+    public String gogogo(@PathVariable("id") Long id){
+        RCountDownLatch door = redisson.getCountDownLatch("door");
+        door.countDown();//计数-1
+
+        return id+"班的人走完了";
+    }
+
+    /**
+     * 车库停车
+     * 3车位 测试信号量
+     * 信号量也可以用作分布式限流
+     */
+    @GetMapping("/park")
+    @ResponseBody
+    public String park() throws InterruptedException {
+        RSemaphore park = redisson.getSemaphore("park");
+        //park.acquire();//获取一个信号 获取一个值 占一个车位
+        boolean b = park.tryAcquire();
+        if(b){
+            //执行业务
+        }else{
+            return "error";
+        }
+
+
+        return "ok->"+b;
+    }
+
+
+
+    @GetMapping("/go")
+    @ResponseBody
+    public String gp() throws InterruptedException {
+        RSemaphore park = redisson.getSemaphore("park");
+        park.release();//获取一个信号 获取一个值 占一个车位
+        return "ok";
+    }
+
+
+
+
+
 
 
 
