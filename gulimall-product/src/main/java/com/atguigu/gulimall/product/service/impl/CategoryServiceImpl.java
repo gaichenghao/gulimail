@@ -15,7 +15,10 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -104,8 +107,20 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
 
     /**
      * 级联跟新所有关联数据
+     *@CacheEvict 失效模式
+     * 1\同时进行多种缓存操作 @Caching
+     * 2、指定删除某个分区下的所有数据     @CacheEvict(value = "category" ,allEntries = true)
+     * 3、存储统一类型的数据 都可以指定同一个分区。分区名默认就是缓存的前缀
      * @param category
      */
+
+//    @Caching(evict = {
+//            @CacheEvict(value = "category",key = "'getLevel1Category'"),
+//            @CacheEvict(value = "category",key = "'getCatalogJson'")
+//    })
+    //category:key
+    @CacheEvict(value = "category" ,allEntries = true)//失效模式
+//    @CachePut //双写模式
     @Transactional
     @Override
     public void updateCascade(CategoryEntity category) {
@@ -131,11 +146,27 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
      *     spel详细参照 https://www.bilibili.com/video/BV1np4y1C7Yf?p=169&spm_id_from=pageDriver  10:36
      *     2）、指定缓存的数据的存活时间:配置文件中修改ttl
      *     3）、将数据保存为json格式：
+     *  4、spring-cache 的不足：
+     *      1）读模式 ：
+     *          缓存穿透：查询一个null数据 解决 缓存空数据 cache-null-values=true
+     *          缓存击穿：大量并发进来同时查询一个整好过期的数据 解决:加锁；？默认不加锁 sync = true(加锁 解决击穿)
+     *          缓存雪崩：大量的key同时过期 解决 加随机时间 加上过期时间 spring.cache.redis.time-to-live
+     *      2）写模式（缓存与数据库一致）
+     *          1）、读写加锁。
+     *          2）、引入Canal。感知到Mysql的更新去更新数据库
+     *          3）、读多写多 直接去数据库查询就行
+     *   总结：
+     *      常规数据（读多写少 即时性 一致性要求不高的数据） 完全可以使用spring-cache；写模式（只有缓存的数据有过期时间就足够了）
+     *      特殊数据：特殊设计
+     *
+     *
+     *   原理：
+     *   cachemanager(rediscachemanager)->cache(redisCache)->cache负责缓存的读写
      *
      */
 
 
-    @Cacheable(value = {"category"},key = "#root.method.name")  //代表当前方法的结果需要缓存 如果缓存中有，方法不用调用 如果缓存中没有 会嗲用方法 最后将方法的结果放入缓存
+    @Cacheable(value = {"category"},key = "#root.method.name",sync = true)  //代表当前方法的结果需要缓存 如果缓存中有，方法不用调用 如果缓存中没有 会嗲用方法 最后将方法的结果放入缓存
     @Override
     public List<CategoryEntity> getLevel1Category() {
         long l = System.currentTimeMillis();
@@ -143,8 +174,53 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
         System.out.println("消耗时间:"+(System.currentTimeMillis()-l));
 
         return parent_cid;
+//        return null;
     }
 
+    @Cacheable(value = {"category"},key = "#root.methodName")
+    @Override
+    public Map<Long, List<Catalog2Vo>> getCatalogJson() {
+        System.out.println("查询了数据库");
+
+        /**
+         * 1、将数据库的多次查询变为一次
+         */
+        List<CategoryEntity> selectList = baseMapper.selectList(null);
+        //1、查出所有1级分类
+        List<CategoryEntity> level1Category =  getParent_cid(selectList,0L);
+        //2、封装数据
+        Map<Long, List<Catalog2Vo>> parent_cid = level1Category.stream().collect(Collectors.toMap(k -> k.getCatId(), v -> {
+            //1\每一个的一级分类 查到这个一级分类的二级分类
+            List<CategoryEntity> categoryEntities = getParent_cid(selectList,v.getCatId());
+            //2 封装上面面的结果
+            List<Catalog2Vo> catelog2VoList = new ArrayList<>();
+            if (categoryEntities != null) {
+                catelog2VoList = categoryEntities.stream().map(l2 -> {
+                    Catalog2Vo catelog2Vo = new Catalog2Vo(v.getCatId().toString(), null, l2.getCatId().toString(), l2.getName());
+
+                    //1\找当前二级分类的三级分类封装成vo
+                    //List<CategoryEntity> level3Catelog= baseMapper.selectList(new QueryWrapper<CategoryEntity>().eq("parent_cid", l2.getCatId()));
+                    List<CategoryEntity> level3Catelog= getParent_cid(selectList,l2.getCatId());
+                    if(level3Catelog!=null){
+
+                        List<Catalog2Vo.Catalog3Vo> collect = level3Catelog.stream().map(l3 -> {
+                            //2封装指定格式
+                            Catalog2Vo.Catalog3Vo catelog3Vo = new Catalog2Vo.Catalog3Vo(l2.getCatId().toString(), l3.getCatId().toString(), l3.getName());
+                            return catelog3Vo;
+                        }).collect(Collectors.toList());
+                        catelog2Vo.setCatalog3List(collect);
+                    }
+
+
+
+                    return catelog2Vo;
+                }).collect(Collectors.toList());
+            }
+            return catelog2VoList;
+        }));
+
+        return parent_cid;
+    }
 
     //TODO 产生堆外内存溢出：outofdirectmemoryError
     // 1)\springboot2.0以后默认使用letture作为操作redis的客户端 他使用netty进行网络通信
@@ -153,8 +229,8 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
     // 1)\ 升级lettuce客户端 2） 切换使用jedis
     // redisTemlate:
     // lettuce、jedis 操作redis 的底层客户端 spring 再次封装redisTemplate;
-    @Override
-    public Map<Long,List<Catalog2Vo>> getCatalogJson() {
+    //Override
+    public Map<Long,List<Catalog2Vo>> getCatalogJson2() {
         // 给缓存中放json字符串 拿出的json字符串 还用逆转位能用的对象类型【序列话与方序列化】
 
 
