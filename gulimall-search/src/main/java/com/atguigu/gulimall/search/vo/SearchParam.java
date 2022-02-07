@@ -39,6 +39,9 @@ public class SearchParam {
     private Integer testNum=0;
 
 
+    private String _queryString;//原生的所有查询条件
+
+
 
 
 

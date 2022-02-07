@@ -9,6 +9,7 @@ import com.atguigu.gulimall.search.constant.EsConstant;
 import com.atguigu.gulimall.search.feign.ProductFeignService;
 import com.atguigu.gulimall.search.service.MallSearchService;
 import com.atguigu.gulimall.search.vo.AttrResponseVo;
+import com.atguigu.gulimall.search.vo.BrandVo;
 import com.atguigu.gulimall.search.vo.SearchParam;
 import com.atguigu.gulimall.search.vo.SearchResult;
 import org.apache.lucene.search.join.ScoreMode;
@@ -21,7 +22,6 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
-import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.nested.NestedAggregationBuilder;
 import org.elasticsearch.search.aggregations.bucket.nested.ParsedNested;
@@ -37,8 +37,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import javax.swing.text.Highlighter;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -258,6 +259,8 @@ public class MallSearchServiceImpl implements MallSearchService {
             attrVo.setAttrId(attrId);
             attrVo.setAttrName(attrName);
             attrVo.setAttrValue(attrValues);
+
+
             attrVos.add(attrVo);
         }
 
@@ -311,13 +314,15 @@ public class MallSearchServiceImpl implements MallSearchService {
         result.setPageNavs(pageNavs);
 
         //6构建面包屑导航功能
-        List<SearchResult.NavVo> collect = param.getAttrs().stream().map(attr -> {
+        if(param.getAttrs()!=null && param.getAttrs().size()>0){
+            List<SearchResult.NavVo> collect = param.getAttrs().stream().map(attr -> {
             //1/分析每个attrs传过来的参数值
             SearchResult.NavVo navVo = new SearchResult.NavVo();
             //attes=2_5寸：6寸
             String[] s = attr.split("_");
             navVo.setNavValue(s[1]);
             R r = productFeignService.attrInfo(Long.parseLong(s[0]));
+                result.getAttrIds().add(Long.parseLong(s[0]));
             if(r.getCode()==0){
                 AttrResponseVo data = r.getData("attr", new TypeReference<AttrResponseVo>() {
                 });
@@ -325,16 +330,58 @@ public class MallSearchServiceImpl implements MallSearchService {
             }else{
                 navVo.setNavName((s[0]));
             }
+
+
+            //2、取消了这个面包屑以后 我们要跳转到那个地方,将请求地址的url里面的当前制空
+            //拿到所有的查询条件 去掉当前。
+            //attrs=15_海思
+            String replace = replaceQueryString(param, attr,"attrs");
+            navVo.setLink("http://search.gulimall.com/list.html?"+replace);
             //navVo.setNavName();
             return navVo;
         }).collect(Collectors.toList());
+            result.setNavs(collect);
+        }
 
-        //取消了这个面包屑以后 我们要跳转到那个地方
-        result.setNavs(collect);
+        //品牌 分类
+        if(param.getBrandId()!=null && param.getBrandId().size()>0){
+            List<SearchResult.NavVo> navs = result.getNavs();
+            SearchResult.NavVo navVo=new SearchResult.NavVo();
+
+            navVo.setNavName("品牌");
+            //// TODO: 2022/2/7 远程查询所有品牌
+            R r = productFeignService.brandInfo(param.getBrandId());
+            if(r.getCode()==0){
+                List<BrandVo> brandVoList = r.getData("brand", new TypeReference<List<BrandVo>>() {
+                });
+                StringBuffer stringBuffer=new StringBuffer();
+                String replace="";
+                for (BrandVo brandVo : brandVoList) {
+                    stringBuffer.append(brandVo.getName()+";");
+                    replace=replaceQueryString(param,brandVo.getBrandId()+"","brandId");
+                }
+                navVo.setNavValue(stringBuffer.toString());
+                navVo.setLink("http://search.gulimall.com/list.html?"+replace);
+            }
+            navs.add(navVo);
+        }
+
+        //TODO 分类：不需要导航取消
 
         return result;
     }
 
+    private String replaceQueryString(SearchParam param, String value,String key) {
+        String encode=null;
+        try {
+            encode = URLEncoder.encode(value, "UTF-8");
+            encode=encode.replace("+","%20");//浏览器对空格的编码与java不一样
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        String replace = param.get_queryString().replace("&"+key+"=" + encode, "");
+        return replace;
+    }
 
 
 }

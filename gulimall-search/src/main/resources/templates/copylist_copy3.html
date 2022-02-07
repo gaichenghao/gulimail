@@ -768,8 +768,11 @@
         </div>
         <div class="JD_ipone_one c">
             <!-- 遍历面包屑功能 -->
-            <a th:href="${nav.link}" th:each="nav:${result.navs}"><span th:text="${nav.navName}"></span>：<span th:text="${nav.navValue}"></span> x</a>
+            <a th:href="${nav.link}" th:each="nav:${result.navs}">
+                <span th:text="${nav.navName}"></span>：<span th:text="${nav.navValue}"></span> x</a>
+            <a>2</a>
         </div>
+        <a>2</a>
         <i><img src="/static/search/image/right-@1x.png" alt=""></i>
     </div>
 </div>
