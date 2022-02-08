@@ -2,26 +2,17 @@
 #  datasource:
 #    username: root
 #    password: root
-#    url: jdbc:mysql://101.200.164.72:3306/gulimall_pms
+#    url: jdbc:mysql://192.168.65.141:3306/gulimall_pms
 #    driver-class-name: com.mysql.jdbc.Driver
 #  cloud:
 #    nacos:
 #      discovery:
-#        server-addr: 101.200.164.72:8848
+#        server-addr: 127.0.0.1:8848
 #    alicloud:
 #      access-key:
 #      secret-key:
 #      oss:
 #        endpoint: oss-cn-beijing.aliyuncs.com
-#  jackson:
-#    date-format: yyyy-MM-dd HH:mm:ss
-#  thymeleaf:
-#    cache: false
-#  mvc:
-#    static-path-pattern=/static/**
-#  redis:
-#    host: 101.200.164.72
-#    port: 6379
 #
 #  application:
 #    name: gulimall-product
@@ -40,7 +31,9 @@
 #
 #logging:
 #  level:
-#    com.atguigu.gulimall: error
-#
-#
-#
+#    com.atguigu.gulimall: debug
+
+#spring:
+#  redis:
+#    host: 101.200.164.72
+#    port: 6379
