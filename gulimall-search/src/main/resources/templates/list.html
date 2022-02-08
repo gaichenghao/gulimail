@@ -1211,7 +1211,7 @@
                     </div>
                     <!--排序内容，每四个是一组-->
                     <div class="rig_tab">
-                        <div th:each="product : ${result.getProduct()}">
+                        <div th:each="product : ${result.getProducts()}">
                             <div class="ico">
                                 <i class="iconfont icon-weiguanzhu"></i>
                                 <a href="/static/search/#">关注</a>
@@ -1265,7 +1265,7 @@
                                    th:attr="pn=${navs},style=${navs == result.pageNum?'border: 0;color:#ee2222;background: #fff':''}"
                                    th:each="navs : ${result.pageNavs}">[[${navs}]]</a>
                                 <a class="page_a" th:attr="pn=${result.pageNum + 1}"
-                                   th:if="${result.pageNum<result.totalPages}">
+                                   th:if="${result.pageNum<result.pagePages}">
                                     下一页 >
                                 </a>
                             </span>

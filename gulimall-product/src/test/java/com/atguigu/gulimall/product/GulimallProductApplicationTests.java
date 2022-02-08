@@ -1,8 +1,11 @@
 package com.atguigu.gulimall.product;
 
+import com.atguigu.gulimall.product.dao.AttrGroupDao;
+import com.atguigu.gulimall.product.dao.SkuSaleAttrValueDao;
 import com.atguigu.gulimall.product.entity.BrandEntity;
 import com.atguigu.gulimall.product.service.BrandService;
 import com.atguigu.gulimall.product.service.CategoryService;
+import com.atguigu.gulimall.product.vo.SkuItemSaleAttrVo;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
@@ -34,6 +37,26 @@ public class GulimallProductApplicationTests {
 
     @Autowired
     RedissonClient redissonClient;
+
+
+    @Autowired
+    AttrGroupDao attrGroupDao;
+
+
+    @Autowired
+    SkuSaleAttrValueDao skuSaleAttrValueDao;
+
+
+    @Test
+    public void test1(){
+        //List<SpuItemAttrGroupVo> group = attrGroupDao.getAttrGroupWithAttrBySpuId(13L, 225L);
+        //System.out.println(group.toString());
+        List<SkuItemSaleAttrVo> saleAttrsBySpuId = skuSaleAttrValueDao.getSaleAttrsBySpuId(13L);
+        System.out.println(saleAttrsBySpuId.toString());
+    }
+
+
+
 
     @Test
     public void test(){
