@@ -1,16 +1,23 @@
 package com.atguigu.gulimall.thirdparty;
 
 
+import com.alibaba.fastjson.JSON;
 import com.aliyun.oss.OSS;
-import com.aliyun.oss.OSSClient;
+import com.atguigu.gulimall.thirdparty.component.SmsComponent;
+import com.atguigu.gulimall.thirdparty.util.HttpUtils;
+import org.apache.http.HttpResponse;
+import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.util.StringUtils;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.util.HashMap;
+import java.util.Map;
 
 @SpringBootTest
 @RunWith(SpringRunner.class)
@@ -18,6 +25,9 @@ public class GulimallThirdPartyApplicationTests {
 
     @Autowired
     OSS ossClient;
+
+    @Autowired
+    SmsComponent smsComponent;
 
     @Test
     public void contextLoads() {
@@ -64,6 +74,70 @@ public class GulimallThirdPartyApplicationTests {
         ossClient.shutdown();
         System.out.println("上传成功");
 
+    }
+
+
+
+    @Test
+    public void sms(){
+        String phone="13167590654";
+        String code="222333";
+
+        //判断手机号是否为空
+        if(StringUtils.isEmpty(phone)){
+
+            System.out.println("号码为空");
+        }
+
+        String host = "https://dfsns.market.alicloudapi.com";
+        String path = "/data/send_sms";
+        String method = "POST";
+        String appcode = "f7dea730acf041da8c15f85899080114";
+        Map<String, String> headers = new HashMap<String, String>();
+        //最后在header中的格式(中间是英文空格)为Authorization:APPCODE 83359fd73fe94948385f570e3c139105
+        headers.put("Authorization", "APPCODE " + appcode);
+        //根据API的要求，定义相对应的Content-Type
+        headers.put("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+        Map<String, String> querys = new HashMap<String, String>();
+        Map<String, String> bodys = new HashMap<String, String>();
+        bodys.put("content", "code:"+code+",expire_at:5");
+        bodys.put("phone_number", phone);
+        bodys.put("template_id", "TPL_0001");
+
+
+        try {
+            /**
+             * 重要提示如下:
+             * HttpUtils请从
+             * https://github.com/aliyun/api-gateway-demo-sign-java/blob/master/src/main/java/com/aliyun/api/gateway/demo/util/HttpUtils.java
+             * 下载
+             *
+             * 相应的依赖请参照
+             * https://github.com/aliyun/api-gateway-demo-sign-java/blob/master/pom.xml
+             */
+            HttpResponse response = HttpUtils.doPost(host, path, method, headers, querys, bodys);
+            //System.out.println(response.toString());
+            //获取response的body
+            //System.out.println(EntityUtils.toString(response.getEntity()));
+            Map<String,String> map=new HashMap<String, String>();
+            Map<String, String> result = JSON.parseObject(EntityUtils.toString(response.getEntity()), map.getClass());
+            //map.put("request_id","TID877a484f93ac48e09911f39fd3700081");
+            //map.put("status","OK");
+            if(result.get("status").toString().equals("OK")){
+                System.out.println("发送成功");
+            }else{
+                System.out.println("发送失败");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    @Test
+    public void testSendCode(){
+        smsComponent.sendSmsCode("13167590654","123321");
     }
 
 }
