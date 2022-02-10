@@ -1,9 +1,15 @@
 package com.atguigu.gulimall.member.controller;
 
+import com.atguigu.common.exception.BizCodeEnume;
 import com.atguigu.common.utils.PageUtils;
 import com.atguigu.common.utils.R;
 import com.atguigu.gulimall.member.entity.MemberEntity;
+import com.atguigu.gulimall.member.exception.PhoneExsitException;
+import com.atguigu.gulimall.member.exception.UsernameExsitException;
+import com.atguigu.gulimall.member.feign.CouponFeignService;
 import com.atguigu.gulimall.member.service.MemberService;
+import com.atguigu.gulimall.member.vo.MemberLoginVo;
+import com.atguigu.gulimall.member.vo.MemberRegistVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,6 +32,10 @@ public class MemberController {
     private MemberService memberService;
 
 
+    @Autowired
+    CouponFeignService couponFeignService;
+
+
     //@Autowired
     //CouponFeignService couponFeignService;
     //
@@ -36,6 +46,42 @@ public class MemberController {
     //    R membercoupons = couponFeignService.membercoupons();
     //    return R.ok().put("member",memberEntity).put("coupons",membercoupons.get("coupons"));
     //}
+
+
+
+
+    @PostMapping("/regist")
+    public R regist(@RequestBody MemberRegistVo vo){
+
+        try {
+            memberService.regist(vo);
+        }catch (PhoneExsitException ex){
+
+            return R.error(BizCodeEnume.PHONE_EXIST_EXCEPTION.getCode(), BizCodeEnume.PHONE_EXIST_EXCEPTION.getMsg());
+        }catch (UsernameExsitException ex){
+            return R.error(BizCodeEnume.USER_EXIST_EXCEPTION.getCode(), BizCodeEnume.USER_EXIST_EXCEPTION.getMsg());
+        }
+        return R.ok();
+
+    }
+
+
+    @PostMapping("/login")
+    public R login(@RequestBody MemberLoginVo vo){
+        MemberEntity entity=memberService.login(vo);
+        if(entity!=null){
+            return R.ok();
+        }else {
+            return R.error(BizCodeEnume.lOGINACCT_PASSWORD_INVAILD_EXCEPTION.getCode(),BizCodeEnume.lOGINACCT_PASSWORD_INVAILD_EXCEPTION.getMsg());
+        }
+
+
+    }
+
+
+
+
+
 
     /**
      * 列表
