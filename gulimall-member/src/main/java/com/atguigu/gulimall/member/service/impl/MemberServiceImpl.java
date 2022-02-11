@@ -11,6 +11,7 @@ import com.atguigu.gulimall.member.exception.UsernameExsitException;
 import com.atguigu.gulimall.member.service.MemberService;
 import com.atguigu.gulimall.member.vo.MemberLoginVo;
 import com.atguigu.gulimall.member.vo.MemberRegistVo;
+import com.atguigu.gulimall.member.vo.SocialUser;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -116,12 +117,17 @@ public class MemberServiceImpl extends ServiceImpl<MemberDao, MemberEntity> impl
         }
     }
 
+    @Override
+    public MemberEntity login(SocialUser socialUser) {
+        //登陆和注册合并逻辑
+        String uuid = socialUser.getUuid();
+        //1\判断当前社交用户是否 已经登录过系统
+        MemberDao member=this.baseMapper;
+        MemberEntity entity = member.selectOne(new QueryWrapper<MemberEntity>().eq("social_uid", uuid));
 
 
-
-
-
-
+        return null;
+    }
 
 
 }
