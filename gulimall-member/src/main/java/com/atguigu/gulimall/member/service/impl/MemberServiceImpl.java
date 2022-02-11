@@ -123,8 +123,23 @@ public class MemberServiceImpl extends ServiceImpl<MemberDao, MemberEntity> impl
         String uuid = socialUser.getUuid();
         //1\判断当前社交用户是否 已经登录过系统
         MemberDao member=this.baseMapper;
-        MemberEntity entity = member.selectOne(new QueryWrapper<MemberEntity>().eq("social_uid", uuid));
+        MemberEntity memberEntity = member.selectOne(new QueryWrapper<MemberEntity>().eq("social_uid", uuid));
 
+        if(memberEntity!=null){
+            //这个用户已经注册
+            MemberEntity update = new MemberEntity();
+            update.setId(memberEntity.getId());
+            update.setAccessToken(memberEntity.getAccessToken());
+            update.setExpiresIn(memberEntity.getExpiresIn());
+            member.updateById(update);
+            memberEntity.setAccessToken(socialUser.getAccess_token());
+            memberEntity.setExpiresIn(socialUser.getExpires_in());
+            return memberEntity;
+
+
+        }else {
+            //2\没有查到当前社交用户对应的记录我们就需要注册一个
+        }
 
         return null;
     }
