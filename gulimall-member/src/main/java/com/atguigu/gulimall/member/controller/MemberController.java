@@ -49,11 +49,11 @@ public class MemberController {
     //}
 
     @PostMapping("/oauth2/login")
-    public R oauthlogin(@RequestBody SocialUser socialUser){
+    public R oauthlogin(@RequestBody SocialUser socialUser) throws Exception {
         MemberEntity entity=memberService.login(socialUser);
         if(entity!=null){
             //todo 1、登陆成功处理
-            return R.ok();
+            return R.ok().setData(entity);
         }else {
             return R.error(BizCodeEnume.lOGINACCT_PASSWORD_INVAILD_EXCEPTION.getCode(), BizCodeEnume.VAILD_EXCEPTION.getMsg());
         }
