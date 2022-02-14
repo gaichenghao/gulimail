@@ -16,9 +16,7 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -220,6 +218,14 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
         }));
 
         return parent_cid;
+    }
+
+    @Override
+    public void likeTest() {
+        QueryWrapper<CategoryEntity> queryWrapper=new QueryWrapper<>();
+        queryWrapper.like("name","图书");
+        List<CategoryEntity> categoryEntities = this.baseMapper.selectList(queryWrapper);
+
     }
 
     //TODO 产生堆外内存溢出：outofdirectmemoryError

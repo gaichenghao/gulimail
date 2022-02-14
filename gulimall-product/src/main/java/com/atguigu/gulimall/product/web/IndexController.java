@@ -37,7 +37,7 @@ public class IndexController {
 
         //试图解析器进行频串:
         //classpath:/templates/+返回值+：.html
-        model.addAttribute("categorys",categories);
+        model.addAttribute("categories",categories);
         return "index";
     }
 

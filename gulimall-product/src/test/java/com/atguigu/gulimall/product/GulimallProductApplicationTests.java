@@ -70,8 +70,9 @@ public class GulimallProductApplicationTests {
     @Test
     public void redisson(){
 
-        System.out.println(redissonClient);
+        //System.out.println(redissonClient);
 
+        categoryService.likeTest();
 
     }
 

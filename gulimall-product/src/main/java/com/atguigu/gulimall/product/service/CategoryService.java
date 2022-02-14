@@ -31,5 +31,7 @@ public interface CategoryService extends IService<CategoryEntity> {
     List<CategoryEntity> getLevel1Category();
 
     Map<Long, List<Catalog2Vo>> getCatalogJson();
+
+    void likeTest();
 }
 
