@@ -966,7 +966,7 @@
                             <!--                            </div>-->
                         </div>
                     </li>
-                    <li class="baozhuang actives" id="li2">
+
                     <li class="baozhuang actives" id="li2">
                         <div class="guiGebox">
                             <div class="guiGe" th:each="group : ${item.groupAttrs}">
@@ -1391,7 +1391,7 @@
     $(".addToCart").click(function () {
         let skuId = $(this).attr("skuId");
         let num = $("#productNum").val();
-        location.href = "http://cart.gulimall.com/addCartItem?skuId=" + skuId + "&num=" + num;
+        location.href = "http://cart.gulimall.com/addToCart?skuId=" + skuId + "&num=" + num;
         return false;
     });
 

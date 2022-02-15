@@ -5,7 +5,7 @@ import lombok.Data;
 @Data
 public class AttrValueWithSkuIdVo {
 
-    private String attrValues;
+    private String attrValue;
 
     private String skuIds;
 }

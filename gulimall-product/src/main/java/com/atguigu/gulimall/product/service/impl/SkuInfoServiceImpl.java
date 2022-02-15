@@ -148,7 +148,7 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoDao, SkuInfoEntity> i
         CompletableFuture<Void> descFutre = infoFuture.thenAcceptAsync((res) -> {
             // 4\获取spu的介绍
             SpuInfoDescEntity spuInfoDescEntity = spuInfoDescService.getById(res.getSpuId());
-            skuItemVo.setDesp(spuInfoDescEntity);
+            skuItemVo.setDesc(spuInfoDescEntity);
 
         }, executor);
 
