@@ -13,4 +13,13 @@ spring:
         extension-configs[0]:
           data-id: gulimall-order-dev.yml
           group: dev
-          refresh: true
+          refresh:
+  rabbitmq:
+    addresses: 101.200.164.72
+    host: 5672
+    virtual-host: /
+    #开启发送端确认
+    publisher-confirms: true
+server:
+  port: 9001
+
