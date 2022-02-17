@@ -3,6 +3,8 @@ spring:
     active: dev
   application:
     name: gulimall-order
+  session:
+    store-type: redis
   cloud:
     nacos:
       config:
@@ -14,12 +16,36 @@ spring:
           data-id: gulimall-order-dev.yml
           group: dev
           refresh:
+      discovery:
+        namespace: gulimall
+  redis:
+    host: 101.200.164.72
+    port: 6379
+
+
   rabbitmq:
     addresses: 101.200.164.72
     host: 5672
     virtual-host: /
     #开启发送端确认
     publisher-confirms: true
+    #开启发送端消息抵达队列的确认
+    publisher-returns: true
+    #只要抵达队列 一异步发送优先回调我们这个returnconfirm
+    template:
+      mandatory: true
+    #手动ack消息
+    listener:
+      simple:
+        acknowledge-mode: manual
+  thymeleaf:
+    cache: false
 server:
   port: 9001
+
+gulimall:
+  thread:
+    core-size : 20
+    max-size : 200
+    keep-alive-time : 10
 

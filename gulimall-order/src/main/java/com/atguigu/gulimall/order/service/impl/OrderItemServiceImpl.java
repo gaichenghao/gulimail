@@ -58,6 +58,28 @@ public class OrderItemServiceImpl extends ServiceImpl<OrderItemDao, OrderItemEnt
         MessageProperties messageProperties = message.getMessageProperties();
         //Thread.sleep(3000);
         System.out.println("消息处理完成==》"+context);
+        //channel内按顺序自增的
+        long deliveryTag = message.getMessageProperties().getDeliveryTag();
+
+
+        //签收货物 非批量模式
+        try {
+            if(deliveryTag%2==0){
+                channel.basicAck(deliveryTag,false );
+                System.out.println("签收了货物。。。"+deliveryTag);
+            }else {
+                //退货 var4=false 丢弃 var4=true 发回服务器 服务器重新入队
+                //long var1, boolean var3, boolean var4
+                channel.basicNack(deliveryTag,false,false);
+                //channel.basicReject();
+
+                System.out.println("没有签收了货物。。。"+deliveryTag);
+            }
+
+
+        }catch (Exception e){
+            //网络中断
+        }
 
     }
 
