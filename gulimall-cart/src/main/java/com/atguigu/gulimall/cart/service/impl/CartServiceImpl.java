@@ -186,7 +186,7 @@ public class CartServiceImpl implements CartService {
 
                         R price = productFeignService.getPrice(x.getSkuId());
                         //// TODO: 2022/2/17  更新位最新价格
-                        String data = (String) price.get("data");
+                        String data =  price.get("data").toString();
                         x.setPrice(new BigDecimal(data));
                         return x;
                     })
