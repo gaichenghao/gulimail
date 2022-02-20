@@ -3,12 +3,14 @@ package com.atguigu.gulimall.ware.controller;
 import com.atguigu.common.utils.PageUtils;
 import com.atguigu.common.utils.R;
 import com.atguigu.gulimall.ware.entity.PurchaseEntity;
+import com.atguigu.gulimall.ware.service.PurchaseDetailService;
 import com.atguigu.gulimall.ware.service.PurchaseService;
 import com.atguigu.gulimall.ware.vo.MergeVo;
 import com.atguigu.gulimall.ware.vo.PurchaseDoneVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.file.attribute.UserDefinedFileAttributeView;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -28,6 +30,10 @@ import java.util.Map;
 public class PurchaseController {
     @Autowired
     private PurchaseService purchaseService;
+
+
+    @Autowired
+    private PurchaseDetailService purchaseDetailService;
 
     // /ware/purchase/unreceive/list
     @GetMapping("/unreceive/list")
