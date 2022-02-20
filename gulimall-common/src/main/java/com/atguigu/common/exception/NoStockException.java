@@ -1,4 +1,4 @@
-package com.atguigu.gulimall.ware.exception;
+package com.atguigu.common.exception;
 
 
 public class NoStockException extends RuntimeException{

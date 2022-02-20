@@ -1,6 +1,7 @@
 package com.atguigu.gulimall.order.service.impl;
 
 import com.alibaba.fastjson.TypeReference;
+import com.atguigu.common.exception.NoStockException;
 import com.atguigu.common.utils.PageUtils;
 import com.atguigu.common.utils.Query;
 import com.atguigu.common.utils.R;
@@ -201,8 +202,10 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
                     return  response;
                 }else {
                     //锁失败了
-                    response.setCode(3);
-                    return  response;
+                    String msg = (String) r.get("msg");
+                    throw new NoStockException(1L);
+//                    response.setCode(3);
+//                    return  response;
 
                 }
 
@@ -251,6 +254,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
 
         //3\计算价格相关
         computePrice(entity,orderItemEntities);
+        orderCreateTo.setOrder(entity);
+        orderCreateTo.setOrderItems(orderItemEntities);
 
         return  orderCreateTo;
     }
@@ -376,7 +381,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         String skuAttr = StringUtils.collectionToDelimitedString(cartItem.getSkuAttr(), ";");
         itemEntity.setSkuAttrsVals(skuAttr);
         itemEntity.setSkuQuantity(cartItem.getCount());
-        //4\u优惠信息【不做】
+        //4\优惠信息【不做】
         //5\积分信息
         itemEntity.setGiftGrowth(cartItem.getPrice().multiply(new BigDecimal(cartItem.getCount().toString())).intValue());
         itemEntity.setGiftIntegration(cartItem.getPrice().multiply(new BigDecimal(cartItem.getCount().toString())).intValue());
