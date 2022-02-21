@@ -10,6 +10,11 @@ public class NoStockException extends RuntimeException{
 
     }
 
+    public NoStockException(String msg){
+        super(msg);
+
+    }
+
     public Long getSkuId() {
         return skuId;
     }

@@ -24,10 +24,12 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.RequestAttributes;
@@ -69,6 +71,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
 
     @Autowired
     ProductFeignService productFeignService;
+
+
+    //不能这么写 循环依赖
+    //@Autowired
+    //OrderService orderService;
 
 
 
@@ -146,6 +153,33 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         return orderConfirmVo;
     }
 
+    //同一个对象内事务方法互调默认时效 原因 绕过了代理对象
+    //事务使用代理对像来控制的
+    @Transactional(timeout = 30)
+    public void a(){
+        //b.c做任何设置都没用 都是和a公用一个事务
+        //this.b();//没用
+        //this.c();//没用
+        OrderServiceImpl  o = (OrderServiceImpl) AopContext.currentProxy();
+        o.b();
+        o.c();
+        int i=10/0;
+    }
+    @Transactional(propagation = Propagation.REQUIRED,timeout = 2)
+    public void b(){
+        //7s
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW,timeout = 20)
+    public void c(){
+
+    }
+
+    //本地事务 在分布式系统 只能控制住自己的回滚 控制不了其他服务的回滚
+    //分布式事务 最大原因 网络问题 +分布式机器
+    //(isolation = Isolation.REPEATABLE_READ)
+    //REQUIRED/REQUIRED_NEW
+    //@GlobalTransactional  //高并发
     @Transactional
     @Override
     public SubmitOrderResponseVo submitOrder(OrderSubmitVo vo) {
@@ -179,7 +213,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
             if(Math.abs(payAmount.subtract(payPrice).doubleValue())<0.01){
                 //金额对比
                 //
-                //3\保存订单
+                //// TODO: 2022/2/21  3\保存订单
                 saveOrder(order);
                 //4\库存锁定 只要有异常回滚订单数据
                 //订单号 所有订单项（skuId，skuName ，num）
@@ -194,16 +228,24 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
                 }).collect(Collectors.toList());
                 lockVo.setLocks(locks);
 
-                // TODO: 2022/2/18 远程锁库存
+                // TODO: 2022/2/18 4.远程锁库存
+                //库存成功了 但是网络原因 超时了 订单回滚 库存不滚
+
+                //为了保证高并发 库存服务自己回滚 可以发消息给库存·服务
+
+                //库存服务本身也可以使用自动解锁模式 消息
                 R r = wmsFeignService.orderLockStock(lockVo);
                 if(r.getCode()==0){
                     //索成功了
                     response.setOrder(order.getOrder());
+
+                    // TODO: 2022/2/21 5、远程扣减积分 出异常
+                    //int i=10/0;//订单回滚 库存不滚
                     return  response;
                 }else {
                     //锁失败了
                     String msg = (String) r.get("msg");
-                    throw new NoStockException(1L);
+                    throw new NoStockException(msg);
 //                    response.setCode(3);
 //                    return  response;
 
